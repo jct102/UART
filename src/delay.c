@@ -5,18 +5,18 @@
 void TIM4_Config() 
 {
     RCC -> APB1ENR |= RCC_APB1ENR_TIM2EN;   // enable timer 2 clock
-    TIM4 -> PSC = 8-1;       // set prescaler
-    TIM4 -> ARR = 72;   // set ARR value
+    TIM2 -> PSC = 36-1;       // set prescaler: 72Mhz / 70 = 1Mhz ~~ 1us delay
+    TIM2 -> ARR = 0xffff;   // set ARR value
 
-    TIM4 -> CR1 |= TIM_CR1_URS;     // enable timer 4
-    while (!(TIM4 -> SR & TIM_SR_UIF)); // wait for UIF update interrupt flag
+    TIM2 -> CR1 |= TIM_CR1_CEN;     // enable counter
+    while (!(TIM2 -> SR & TIM_SR_UIF)); // wait for update interrupt flag to set
 
 }
 
 void Delay_us (uint16_t us)
 {
-    TIM4 -> CNT = 0;
-    while (TIM4 -> CNT < us);
+    TIM2 -> CNT = 0;
+    while (TIM2 -> CNT < us);
 }
 
 void Delay_ms (uint16_t ms)

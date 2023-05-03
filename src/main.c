@@ -4,12 +4,6 @@
 
 
 
-// enable UART clock
-// set "alternative function" pin mode for RX and TX pins
-// set baud rate (receive/trnasmit clock frequency) via BRR register
-// enable the peripheral, receive, and transmit via the CR1 register
-
-
 void USART2_SendChar (uint8_t c)
 {
     USART2 -> DR = c;   // load the data
@@ -25,10 +19,10 @@ void USART2_SendString (char *string)
 
 uint8_t USART2_GetChar (void)
 {
-    uint8_t Temp;
+    uint8_t temp;
     while (!(USART2 -> SR & USART_SR_RXNE));    // wait for RXNE to be set
-    Temp = USART2 -> DR;    // read the data
-    return Temp;
+    temp = USART2 -> DR;    // read the data
+    return temp;
 }
 
 
@@ -42,53 +36,49 @@ void USART2_init (void)
 
 
     // reset PA2 and PA3
-    GPIOA -> CRL &= ~(GPIO_CRL_MODE2_Msk| GPIO_CRL_MODE3_Msk);
-    GPIOA -> CRL &= ~(GPIO_CRL_CNF2_Msk | GPIO_CRL_CNF2_Msk);
+    GPIOA -> CRL = 0;
     // set PA2 to push-pull output
     GPIOA -> CRL |= GPIO_CRL_MODE2_0;
     GPIOA -> CRL |= GPIO_CRL_CNF2_1;
-    // set PA3 to input - MODE3 already reset to 0 input mode
+    // set PA3 to input
+    GPIOA -> CRL &= ~(GPIO_CRL_MODE3_Msk);
     GPIOA -> CRL |= GPIO_CRL_CNF3_1;
-    GPIOA -> CRL &= ~(GPIO_CRL_CNF3_Msk);
+    
+
+    GPIOA -> ODR |= GPIO_ODR_ODR3;  // pull up for PA3
 
 
     USART2 -> CR1 = 0x00;  // clear ALL
     USART2 -> CR1 |= USART_CR1_UE;  // enable USART
 
-    USART2 -> CR1 &= ~(USART_CR1_PCE_Msk);  // set word length to 8 data bits, 1 start bit, n stop bit
-    USART2 -> CR2 &= ~(USART_CR2_STOP_Msk);
-
     // set baud rate
-    USART2 -> BRR = (26 << 4) | (1 << 0);
+    USART2 -> BRR = (234 << 4) | (6 << 0);  // 9600
 
     // enable TE and RE via CR1 register
-    USART2 -> CR1 |= (USART_CR1_TE | USART_CR1_RE);
-}
+    USART2 -> CR1 |= USART_CR1_RE;
+    USART2 -> CR1 |= USART_CR1_TE;
 
-
-void delay (uint32_t time)
-{
-    while (time--);
+    // USART2 -> CR1 &= ~(USART_CR1_PCE_Msk);  // set word length to 8 data bits, 1 start bit, n stop bit
+    // USART2 -> CR2 &= ~(USART_CR2_STOP_Msk);
 }
 
 
 int main (void)
 {
     SysClockConfig();
-    // TIM4_Config();
+    TIM4_Config();
     USART2_init();
 
     while (1)
     {
         // output
-        USART2_SendString ("Hello World\n");
-        delay(1000000000);
+        // USART2_SendString ("Hello World\n");
         // Delay_ms(1000);
 
 
         // input
-        // uint8_t data = USART2_GetChar ();
-		// USART2_SendChar (data);
+        uint8_t data = USART2_GetChar ();
+		USART2_SendChar (data);
     }
 }
 
